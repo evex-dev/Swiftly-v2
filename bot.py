@@ -10,8 +10,11 @@ load_dotenv()
 # トークンを環境変数から取得
 TOKEN = os.getenv('DISCORD_TOKEN')
 
+# Enable the message_content intent
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="sw!", intents=intents)  # `commands.Bot`を使用
+intents.message_content = True  # Explicitly enable message_content intent
+
+bot = commands.Bot(command_prefix="swd!", intents=intents)  # `commands.Bot`を使用
 
 @bot.event
 async def on_ready():

@@ -210,7 +210,7 @@ class WikipediaCog(commands.Cog):
             )
 
     @app_commands.command(
-        name="wikipedia random",
+        name="wikipedia_random",
         description="Wikipediaのおまかせページを表示します"
     )
     async def random_wikipedia(
