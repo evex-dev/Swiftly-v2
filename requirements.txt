@@ -1,0 +1,10 @@
+discord.py
+python-dotenv
+aiohttp
+aiosqlite
+watchdog
+prometheus_client
+psutil
+pillow
+numpy
+wikipedia
