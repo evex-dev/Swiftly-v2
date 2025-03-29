@@ -8,3 +8,11 @@ psutil
 pillow
 numpy
 wikipedia
+aiomysql
+edge_tts
+cryptography
+PyNaCl
+matplotlib
+scikit-learn
+prophet
+pandas

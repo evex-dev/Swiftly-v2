@@ -13,6 +13,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 # Enable the message_content intent
 intents = discord.Intents.default()
 intents.message_content = True  # Explicitly enable message_content intent
+intents.members = True  # Enable members intent if needed
 
 bot = commands.Bot(command_prefix="swd!", intents=intents)  # `commands.Bot`を使用
 
