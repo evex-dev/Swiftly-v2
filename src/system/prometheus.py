@@ -1,13 +1,18 @@
 import discord
 from discord.ext import commands, tasks
 from prometheus_client import Counter, Gauge, start_http_server
-import json
 import os
+import aiomysql
 from asyncio import Lock
 
 class PrometheusCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        
+        # データベース接続情報
+        self.db_host = os.getenv('DB_HOST')
+        self.db_user = os.getenv('DB_USER')
+        self.db_password = os.getenv('DB_PASSWORD')
 
         # Prometheus metrics
         self.command_count = Counter(
@@ -113,8 +118,8 @@ class PrometheusCog(commands.Cog):
         # Update server count gauge every 60 seconds
         self.server_count.set(len(self.bot.guilds))
 
-        # Update unique user count from JSON file
-        user_count = self.get_unique_user_count()
+        # Update unique user count from database
+        user_count = await self.get_unique_user_count()
         self.unique_users.set(user_count)
 
         # Update message count per minute
@@ -126,14 +131,34 @@ class PrometheusCog(commands.Cog):
     async def before_update_gauges(self):
         await self.bot.wait_until_ready()
 
-    def get_unique_user_count(self):
-        # Load unique user count from JSON file
+    async def get_unique_user_count(self):
+        # データベースから最新のユーザー数を取得
         try:
-            with open('data/user_count.json', 'r') as f:
-                data = json.load(f)
-                return data.get('total_users', 0)
-        except (FileNotFoundError, json.JSONDecodeError):
+            pool = await self.create_pool()
+            async with pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "SELECT count FROM user_count WHERE name = 'user_count' ORDER BY timestamp DESC LIMIT 1"
+                    )
+                    result = await cur.fetchone()
+            
+            pool.close()
+            await pool.wait_closed()
+            
+            if result:
+                return result[0]
             return 0
+        except Exception as e:
+            print(f"ユーザー数の取得に失敗しました: {e}")
+            return 0
+
+    async def create_pool(self):
+        return await aiomysql.create_pool(
+            host=self.db_host,
+            user=self.db_user,
+            password=self.db_password,
+            autocommit=True
+        )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(PrometheusCog(bot))
