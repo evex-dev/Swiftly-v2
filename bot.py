@@ -24,7 +24,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix="sw!", intents=intents)
+bot = commands.Bot(command_prefix="swd!", intents=intents)
 
 # DBプールをグローバルで保持する
 async def init_db_pool():
