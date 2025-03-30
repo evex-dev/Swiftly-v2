@@ -15,11 +15,10 @@ class RolePanel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.panels = {}
-        self._initialize_db()
+        self.db_pool = None
         global logger
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
-        self._initialize_db()
 
     async def _initialize_db(self):
         """データベース接続を初期化する"""
@@ -529,4 +528,7 @@ class RolePanel(commands.Cog):
             pass  # DMが無効になっている場合は無視
 
 async def setup(bot):
-    await bot.add_cog(RolePanel(bot))
+    role_panel_cog = RolePanel(bot)
+    await role_panel_cog._initialize_db()  # データベースの初期化を非同期で実行
+    await role_panel_cog._load_panels()    # パネルデータの読み込みも非同期で実行
+    await bot.add_cog(role_panel_cog)
