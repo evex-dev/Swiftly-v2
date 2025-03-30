@@ -12,7 +12,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-
 WIKIPEDIA_LANG: Final[str] = "ja"
 CACHE_SIZE: Final[int] = 100
 SEARCH_RESULTS_LIMIT: Final[int] = 3

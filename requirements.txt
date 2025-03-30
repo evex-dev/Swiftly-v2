@@ -19,3 +19,4 @@ pandas
 torch
 transformers
 sentencepiece
+python-whois

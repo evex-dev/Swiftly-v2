@@ -8,7 +8,6 @@ import discord
 from discord.ext import commands
 from discord import ui
 
-
 API_BASE_URL: Final[str] = "https://captcha.evex.land/api/captcha"
 TIMEOUT_SECONDS: Final[int] = 30
 MIN_DIFFICULTY: Final[int] = 1
