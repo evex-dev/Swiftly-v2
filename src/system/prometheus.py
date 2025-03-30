@@ -89,6 +89,9 @@ class PrometheusCog(commands.Cog):
         # Increment error counter for the command
         self.error_count.labels(command_name=command_name).inc()
 
+        # Log the error for debugging
+        print(f"Error in command '{command_name}': {error}")
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         # Increment temporary message counter
@@ -138,7 +141,7 @@ class PrometheusCog(commands.Cog):
             async with pool.acquire() as conn:
                 async with conn.cursor() as cur:
                     await cur.execute(
-                        "SELECT count FROM user_count WHERE name = 'user_count' ORDER BY timestamp DESC LIMIT 1"
+                        "SELECT count FROM swiftly WHERE name = 'user_count' ORDER BY timestamp DESC LIMIT 1"
                     )
                     result = await cur.fetchone()
             
@@ -150,15 +153,13 @@ class PrometheusCog(commands.Cog):
             return 0
         except Exception as e:
             print(f"ユーザー数の取得に失敗しました: {e}")
-            return 0
-
-    async def create_pool(self):
         return await aiomysql.create_pool(
             host=self.db_host,
             user=self.db_user,
             password=self.db_password,
+            db = "swiftly",
             autocommit=True
         )
-
+    
 async def setup(bot: commands.Bot):
     await bot.add_cog(PrometheusCog(bot))

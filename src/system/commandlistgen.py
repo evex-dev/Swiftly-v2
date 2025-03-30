@@ -12,7 +12,7 @@ class CommandListGen(commands.Cog):
 
     @commands.command(
         name="generate_command_list", 
-        help="すべてのコマンドのリストを生成します。(bot管理者専用)", 
+        help="すべてのアプリケーションコマンドのリストを生成します。(bot管理者専用)", 
         usage="", 
         brief="コマンドリストを生成", 
         permissions="管理者"
@@ -26,13 +26,22 @@ class CommandListGen(commands.Cog):
 
             # ファイルを開いて書き込み
             with open("data/commands.txt", "w", encoding="utf-8") as file:
-                for command in self.bot.commands:
-                    # コマンドの詳細を書き込む
+                for command in self.bot.tree.get_commands():
                     file.write(f"名前: {command.name}\n")
-                    file.write(f"説明: {command.help or '説明がありません。'}\n")
-                    file.write(f"使用法: {command.usage or '使用法がありません。'}\n")
-                    file.write(f"必要な権限: {command.extras.get('permissions', 'なし')}\n")
-                    file.write(f"オプション: {command.brief or 'オプションがありません。'}\n")
+                    file.write(f"説明: {command.description or '説明がありません。'}\n")
+                    file.write(f"必要な権限: {command.default_permissions or 'なし'}\n")
+                    
+                    # オプションの詳細 (選択可能な場所) を記述
+                    if hasattr(command, "options") and command.options:
+                        file.write("オプション:\n")
+                        for option in command.options:
+                            file.write(f"  名前: {option.name}\n")
+                            file.write(f"  説明: {option.description or '説明がありません。'}\n")
+                            file.write(f"  必須: {option.required}\n")
+                            file.write("  ---\n")
+                    else:
+                        file.write("オプション: このコマンドにはオプションの詳細がありません。\n")
+                    
                     file.write("-" * 40 + "\n")
 
             await ctx.send("コマンドリストが生成され、`data/commands.txt` に保存されました。")
