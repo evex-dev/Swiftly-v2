@@ -16,3 +16,6 @@ matplotlib
 scikit-learn
 prophet
 pandas
+torch
+transformers
+sentencepiece
