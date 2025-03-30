@@ -15,7 +15,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 DB_HOST = os.getenv('DB_HOST')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_NAME = os.getenv('DB_NAME')
+DB_NAME = os.getenv('DB_NAME', 'swiftly')  # デフォルト値としてswiftlyを設定
 
 # Enable the message_content intent
 intents = discord.Intents.default()
@@ -25,13 +25,36 @@ intents.members = True  # Enable members intent if needed
 bot = commands.Bot(command_prefix="sw!", intents=intents)  # `commands.Bot`を使用
 # データベース接続プールを作成する関数
 async def create_pool():
-    return await aiomysql.create_pool(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        db=DB_NAME,
-        autocommit=True
-    )
+    try:
+        # まずデータベースなしで接続
+        temp_pool = await aiomysql.create_pool(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            autocommit=True
+        )
+        
+        async with temp_pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                # データベースが存在するか確認し、存在しない場合は作成
+                await cur.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+        
+        # 一時的な接続を閉じる
+        temp_pool.close()
+        await temp_pool.wait_closed()
+        
+        # 改めて指定されたデータベースに接続
+        pool = await aiomysql.create_pool(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            db=DB_NAME,  # ここでデータベースを明示的に指定
+            autocommit=True
+        )
+        return pool
+    except Exception as e:
+        print(f"データベース接続に失敗しました: {e}")
+        return None
 
 # ユーザー数をデータベースに保存する関数
 async def save_user_count():

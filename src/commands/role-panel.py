@@ -22,39 +22,61 @@ class RolePanel(commands.Cog):
 
     async def _initialize_db(self):
         """データベース接続を初期化する"""
-        self.db_pool = await aiomysql.create_pool(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            db="role_panel",
-            autocommit=True
-        )
-        async with self.db_pool.acquire() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS panels (
-                        id BIGINT PRIMARY KEY,
-                        title TEXT NOT NULL,
-                        description TEXT NOT NULL,
-                        channel_id BIGINT NOT NULL,
-                        guild_id BIGINT NOT NULL
+        try:
+            # 最初にデータベースなしで接続
+            temp_pool = await aiomysql.create_pool(
+                host=os.getenv("DB_HOST"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                autocommit=True
+            )
+            
+            # role_panelデータベースを作成
+            async with temp_pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute("CREATE DATABASE IF NOT EXISTS role_panel")
+            
+            temp_pool.close()
+            await temp_pool.wait_closed()
+            
+            # role_panelデータベースに接続
+            self.db_pool = await aiomysql.create_pool(
+                host=os.getenv("DB_HOST"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                db="role_panel",
+                autocommit=True
+            )
+            
+            async with self.db_pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS panels (
+                            id BIGINT PRIMARY KEY,
+                            title TEXT NOT NULL,
+                            description TEXT NOT NULL,
+                            channel_id BIGINT NOT NULL,
+                            guild_id BIGINT NOT NULL
+                        )
+                        """
                     )
-                    """
-                )
-                await cur.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS roles (
-                        panel_id BIGINT NOT NULL,
-                        emoji TEXT NOT NULL,
-                        role_id BIGINT NOT NULL,
-                        role_name TEXT NOT NULL,
-                        description TEXT,
-                        PRIMARY KEY (panel_id, emoji),
-                        FOREIGN KEY (panel_id) REFERENCES panels(id) ON DELETE CASCADE
+                    await cur.execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS roles (
+                            panel_id BIGINT NOT NULL,
+                            emoji VARCHAR(255) NOT NULL,
+                            role_id BIGINT NOT NULL,
+                            role_name TEXT NOT NULL,
+                            description TEXT,
+                            PRIMARY KEY (panel_id, emoji),
+                            FOREIGN KEY (panel_id) REFERENCES panels(id) ON DELETE CASCADE
+                        )
+                        """
                     )
-                    """
-                )
+        except Exception as e:
+            logger.error(f"データベース初期化エラー: {e}")
+            raise
 
     async def _load_panels(self):
         """データベースからロールパネル情報を読み込む"""
