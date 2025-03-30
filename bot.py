@@ -82,19 +82,16 @@ async def on_ready():
     observer.schedule(event_handler, path='./src', recursive=True)
     observer.start()
     print("Watchdogを起動しました。srcディレクトリを監視中...")
-    
-    # ステータス更新タスクを開始
-    asyncio.create_task(update_presence())
-
-async def update_presence() -> None:
-    """ステータスを更新"""
-    while True:
-        await bot.change_presence(
-            activity=discord.Game(
-                name=f"{len(bot.guilds)}のサーバー数 || {round(bot.latency * 1000)}ms"
+    # ステータス自動更新タスクを開始
+    async def update_status():
+        while True:
+            await bot.change_presence(
+                activity=discord.Game(
+                    name=f"{len(bot.guilds)}のサーバー数 || {round(bot.latency * 1000)}ms"
+                )
             )
-        )
-        await asyncio.sleep(300)  # 5分ごとに更新
+            await asyncio.sleep(30)  # 30秒ごとに更新
 
+    asyncio.create_task(update_status())
 # Botの起動
 bot.run(TOKEN)
